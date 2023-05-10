@@ -21,10 +21,16 @@ find_library(IOT_LIB libIoTLibrary "${PROJECT_SOURCE_DIR}/drivers")
 #debugging
 message(${IOT_LIB})
 
+# Add the path to the library headers
+include_directories(/path/to/mh_z19/include)
+
+# Link the library to your project
+target_link_libraries(iot/path/to/mh_z19/lib/libmh_z19.so)
+
+
 #using avr library
 include_directories(${PROJECT_SOURCE_DIR}/avr)
 include_directories(${PROJECT_SOURCE_DIR}/util)
-include_directories(${PROJECT_SOURCE_DIR}/drivers)
 find_library(AVR_LIB libc "${PROJECT_SOURCE_DIR}/avr")
 #debugging
 message(${AVR_LIB})
