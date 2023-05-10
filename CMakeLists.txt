@@ -21,9 +21,8 @@ set(IOT_LIB /path/to/iot/lib)
 # using provided IOT library
 include_directories(${PROJECT_SOURCE_DIR}/drivers)
 find_library(IOT_LIB libIoTLibrary "${PROJECT_SOURCE_DIR}/drivers")
-if(NOT IOT_LIB)
-    message(FATAL_ERROR "Could not find libIoTLibrary")
-endif()
+#debugging
+message(${IOT_LIB})
 
 # Add the path to the library headers
 #include_directories(/path/to/mh_z19/include)
@@ -34,10 +33,8 @@ endif()
 # using avr library
 include_directories(${PROJECT_SOURCE_DIR}/avr)
 include_directories(${PROJECT_SOURCE_DIR}/util)
-find_library(AVR_LIB libc "${PROJECT_SOURCE_DIR}/avr")
-if(NOT AVR_LIB)
-    message(FATAL_ERROR "Could not find libc")
-endif()
+#debugging
+message(${AVR_LIB})
 
 # defining all of our source code as a variable
 file(GLOB CUSTOM_SOURCE_CODE "${PROJECT_SOURCE_DIR}/src/*.c")
@@ -52,5 +49,3 @@ target_link_libraries(${PROJECT_NAME} PUBLIC ${IOT_LIB})
 # linking avr drivers to executable
 target_link_libraries(${PROJECT_NAME} PUBLIC ${AVR_LIB})
 
-# add compiler flags
-target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -O3 -g)
