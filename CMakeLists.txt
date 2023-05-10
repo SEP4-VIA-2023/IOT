@@ -26,7 +26,7 @@ if(NOT IOT_LIB)
 endif()
 
 # Add the path to the library headers
-include_directories(/path/to/mh_z19/include)
+#include_directories(/path/to/mh_z19/include)
 
 # Link the library to your project
 #target_link_libraries(${PROJECT_NAME} PUBLIC mh_z19)
