@@ -29,7 +29,7 @@ endif()
 include_directories(/path/to/mh_z19/include)
 
 # Link the library to your project
-target_link_libraries(${PROJECT_NAME} PUBLIC mh_z19)
+#target_link_libraries(${PROJECT_NAME} PUBLIC mh_z19)
 
 # using avr library
 include_directories(${PROJECT_SOURCE_DIR}/avr)
