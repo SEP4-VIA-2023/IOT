@@ -15,4 +15,4 @@ RUN wget https://raw.githubusercontent.com/platformio/platformio-core-installer/
 RUN udevadm control --reload-rules && udevadm trigger
 
 # Set PATH environment variable
-ENV PATH "$PATH:/root/.local/bin"
+ENV PATH "$PATH:/root/.local/bin" 
