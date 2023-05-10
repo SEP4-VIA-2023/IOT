@@ -11,6 +11,9 @@ project(IOT C)
 set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/bin)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
+set(AVR_LIB /path/to/avr/lib)
+set(IOT_LIB /path/to/iot/lib)
+
 
 #using provided IOT library
 include_directories(${PROJECT_SOURCE_DIR}/drivers)
