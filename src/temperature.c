@@ -19,7 +19,7 @@ EventGroupHandle_t dataEventGroup;
 // Initializes the HIH8120 sensor and prints the status of the driver
 void initialiseTemperature(UBaseType_t TaskPriority) {
     // Initial temperature value
-    temperature = 0
+    temperature = 0;
 
     // Creates Event Group, Queue, Semaphore
     temperatureSemaphore = xSemaphoreCreateBinary();
@@ -65,7 +65,7 @@ void measureTemperature() {
     if ( status == HIH8120_OK )
     {
         // The sensor requires at least 50ms after wakeup
-        vTaskDelay(pdMS_TO_TICKS(100))
+        vTaskDelay(pdMS_TO_TICKS(100));
 
         // Performs a measurement
         status = hih8120_measure();
