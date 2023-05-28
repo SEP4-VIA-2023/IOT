@@ -16,9 +16,11 @@
 
 void lora_handler_task( void *pvParameters );
 
+// payload declaration
 static lora_driver_payload_t _uplink_payload;
 static lora_driver_payload_t _downlink_payload;
 
+// declaration of message buffer for downlink messages
 MessageBufferHandle_t downlink_message_buffer;
 
 void lora_handler_initialise(UBaseType_t lora_handler_task_priority)
@@ -88,14 +90,13 @@ static void _lora_setup(void)
 
 		if ( rc != LORA_ACCEPTED)
 		{
-			// Make the red led pulse to tell something went wrong
+			// Make the red led blink fast to tell something went wrong
 			status_leds_fastBlink(led_ST1);
 			// Wait 5 sec and lets try again
 			vTaskDelay(pdMS_TO_TICKS(5000UL));
 		}
 		else
 		{
-            status_leds_longPuls(led_ST3);
 			break;
 		}
 	} while (--maxJoinTriesLeft);
@@ -168,10 +169,12 @@ void lora_handler_task( void *pvParameters )
 		_uplink_payload.bytes[5] = temp & 0xFF; 		// least significant byte
 		_uplink_payload.bytes[6] = servstatus & 0xFF; 	// 8bit degrees
 
+        // blue led on to indicate sending
 		status_leds_ledOn(led_ST4);
 
         if ((rc = lora_driver_sendUploadMessage(false, &_uplink_payload)) == LORA_MAC_TX_OK)
         {
+            // blue led long pulse to indicate successful sending with no downlink message
             status_leds_longPuls(led_ST4);
             printf("Upload Message OK - No Message Received!!\n");
         }
@@ -179,11 +182,12 @@ void lora_handler_task( void *pvParameters )
         {
             if (rc == LORA_MAC_RX)
             {
+                // ********** DOWNLINK MESSAGE HANDLING (RX) **********
+
                 // message buffer to receive downlink messages in
                 xMessageBufferReceive(downlink_message_buffer, &_downlink_payload, sizeof(_downlink_payload), portMAX_DELAY);
 
-                // ********** DOWNLINK MESSAGE HANDLING (RX) **********
-
+                // slow blink blue to indicate the payload has been received
                 status_leds_slowBlink(led_ST4);
 
                 // for debugging purposes
@@ -195,10 +199,10 @@ void lora_handler_task( void *pvParameters )
                 vTaskDelay(pdMS_TO_TICKS(3000UL));
                 display_7seg_display(_downlink_payload.len, 0);
 
-                // check we receive the correct size of the payload
+                // check the size of the received payload is as expected
                 if (_downlink_payload.len == 13)
                 {
-                    // fast blink led_ST4 to indicate the payload has the correct size
+                    // fast blink blue to indicate the payload has the correct size
                     status_leds_fastBlink(led_ST4);
 
                     uint16_t minCO2;
@@ -225,7 +229,7 @@ void lora_handler_task( void *pvParameters )
                     vTaskDelay(pdMS_TO_TICKS(20UL));
 
 
-                    // turn off LEDs from debug if () after 10 seconds
+                    // turn off orange and blue LEDs after 10 seconds
                     vTaskDelay(pdMS_TO_TICKS(10000UL));
                     status_leds_ledOff(led_ST3);
                     status_leds_ledOff(led_ST4);
@@ -233,6 +237,7 @@ void lora_handler_task( void *pvParameters )
             }
             else
             {
+                // red led fast blink to indicate the payload has not been sent
                 status_leds_fastBlink(led_ST1);
                 printf("Upload Message failed >%s<\n", lora_driver_mapReturnCodeToText(rc));
             }
