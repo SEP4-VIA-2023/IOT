@@ -1,0 +1,18 @@
+name: Code compilation test
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+      
+      - name: Build program using Platformio CLI
+        run: pio run
