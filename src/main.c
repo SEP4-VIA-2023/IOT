@@ -9,27 +9,38 @@
 #include <stdio_driver.h>
 #include <serial.h>
 
-// Needed for LoRaWAN
+/**
+ * Needed for LoRaWAN
+ */
 #include <lora_driver.h>
 #include <status_leds.h>
 
-// including readers and semaphores
+/**
+ * including readers and semaphores
+ */
 #include "semaphores.h"
 #include "co2.h"
 #include "humidity_and_temperature.h"
 #include "servo.h"
 #include "../lib/FreeRTOS/src/FreeRTOSVariant.h"
 
-// define one task
+/**
+ * define one task
+ * @param pvParameters
+ */
 void displayReadings( void *pvParameters );
 
-// Prototype for LoRaWAN handler
+/**
+ * initialize LoRaWAN handler
+ */
 void lora_handler_initialise(UBaseType_t lora_handler_task_priority);
 
 /*-----------------------------------------------------------*/
 void create_tasks_and_semaphores(void)
 {
-	// initialise semaphores for accessing servo related stuff
+    /**
+     * initialize semaphores for accessing servo related stuff
+     */
 	initialiseSemaphores();
 	
 	xTaskCreate(
@@ -47,32 +58,39 @@ void displayReadings( void *pvParameters )
 	TickType_t xLastWakeTime;
 	const TickType_t xFrequency = 2000/portTICK_PERIOD_MS; // 2000 ms
 	const TickType_t TextWait = 10000/portTICK_PERIOD_MS; // 10000 ms
-	// Initialise the xLastWakeTime variable with the current time.
+    /**
+     * Initialize the xLastWakeTime variable with the current time.
+     */
 	xLastWakeTime = xTaskGetTickCount();
 
 	for(;;)
 	{
 		xTaskDelayUntil( &xLastWakeTime, xFrequency );
 
-		
+		/**
+		 * display CO2
+		 */
 		display_7seg_displayHex("C02");
 		xTaskDelayUntil( &xLastWakeTime, xFrequency );
 		uint16_t co2 = readCO2();
-		// we ready to show some stuff
 		display_7seg_display(co2, 0);
 		xTaskDelayUntil( &xLastWakeTime, xFrequency );
-		
+
+        /**
+         * display temperature
+         */
 		display_7seg_displayHex("7E177");
 		xTaskDelayUntil( &xLastWakeTime, TextWait );
 		int16_t temp = ReadTemperature();
-		// we ready to show some stuff
 		display_7seg_display(temp, 0);
 		xTaskDelayUntil( &xLastWakeTime, xFrequency );
-		
+
+        /**
+         * display humidity
+         */
 		display_7seg_displayHex("1770157");
 		xTaskDelayUntil( &xLastWakeTime, TextWait );
 		uint16_t hum = ReadHumidity();
-		// we ready to show some stuff
 		display_7seg_display(hum, 0);
 		xTaskDelayUntil( &xLastWakeTime, xFrequency );
 		
@@ -82,10 +100,14 @@ void displayReadings( void *pvParameters )
 /*-----------------------------------------------------------*/
 void initialiseSystem()
 {
-	// Set output ports for leds used in the example
+    /**
+     * Set output ports for leds
+     */
 	DDRA |= _BV(DDA0) | _BV(DDA7);
 
-	// Make it possible to use stdio on COM port 0 (USB) on Arduino board - Setting 57600,8,N,1
+    /**
+     * Make it possible to use stdio on COM port 0 (USB) on Arduino board - Setting 57600,8,N,1
+     */
 	stdio_initialise(ser_USART0);
 	
 	display_7seg_initialise(NULL);
@@ -98,15 +120,20 @@ void initialiseSystem()
 		0,1000, // HUMIDITY MIN MAX
 		100); // Servo degrees
 	
-	
-	// Let's create some tasks
+	/**
+	 * Let's create some tasks
+	 */
 	create_tasks_and_semaphores();
 
-	// vvvvvvvvvvvvvvvvv BELOW IS LoRaWAN initialisation vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+	// vvvvvvvvvvvvvvvvv LoRaWAN initialisation vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
-    // Status Leds driver
+    /**
+     * Status Leds driver
+     */
 	status_leds_initialise(5); // Priority 5 for internal task
-    // Create LoRaWAN task and start it up with priority 3
+    /**
+     * Create LoRaWAN task and start it up with priority 3
+     */
     lora_handler_initialise(3);
 }
 
@@ -116,10 +143,8 @@ int main(void)
 	initialiseSystem(); // Must be done as the very first thing!!
 	
 	    
-	//printf("Program Started!!\n");
 	vTaskStartScheduler(); // Initialise and run the freeRTOS scheduler. Execution should never return from here.
 
-	/* Replace with your application code */
 	while (1)
 	{
 	}

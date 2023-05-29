@@ -1,23 +1,31 @@
 #include "co2.h"
 #include <mh_z19.h>
 
-// FreeRTOS
+/**
+ * FreeRTOS includes
+ */
 #include <task.h>
 #include <semphr.h>
 
-// Declaring values
+/**
+ * Declaring values
+ */
 uint16_t CO2;
 void CO2ReadingCallBack(uint16_t ppm);
 void CO2ReadingLoop();
 
 void initialiseCO2(UBaseType_t CO2Priority) {
-    // The parameter is the USART port the MH-Z19 sensor is connected to - in this case USART3
+    /**
+     * The parameter is the USART port the MH-Z19 sensor is connected to - in this case USART3
+     */
     mh_z19_initialise(ser_USART3);
     mh_z19_injectCallBack(CO2ReadingCallBack); // Injecting the callback for continuous updates
     CO2 = 0; // setting initial value
 
 
-    // CO2 value reading loop
+    /**
+     * CO2 value reading loop
+     */
     xTaskCreate(
 	CO2ReadingLoop
 	,  "CO2ReadingLoop"  // A name just for humans
@@ -27,29 +35,40 @@ void initialiseCO2(UBaseType_t CO2Priority) {
 	,  NULL );
 }
 
-// Continuously reads the CO2 value
+/**
+ * Continuously reads the CO2 value
+ * @param pvParameters
+ */
 void CO2ReadingLoop(void *pvParameters) {
     TickType_t xLastWakeTime;
 	const TickType_t xFrequency = 1000/portTICK_PERIOD_MS; // 1000 ms
-	// Initialise the xLastWakeTime variable with the current time.
+	/**
+	 * Initialise the xLastWakeTime variable with the current time.
+	 */
 	xLastWakeTime = xTaskGetTickCount();
  
 	for(;;) {
 		xTaskDelayUntil( &xLastWakeTime, xFrequency );
-		//puts("Reading CO2 value..."); // stdio functions are not reentrant - Should normally be protected by MUTEX
 		mh_z19_takeMeassuring();
 	}
 }
 
-// Called from outside to read the latest CO2 value
+/**
+ * Called from outside to read the latest CO2 value
+ * @return returns the latest CO2 value
+ */
 uint16_t readCO2() {
     return CO2;
 }
 
-// Called whenever a new CO2 value is read
+/**
+ * Called whenever a new CO2 value is read
+ * @param ppm the read value
+ */
 void CO2ReadingCallBack(uint16_t ppm)
 {
-    //puts("CO2 value successfully read");
-    // Here you can use the CO2 ppm value
+    /**
+     * Here you can use the CO2 ppm value
+     */
     CO2 = ppm;
 }
