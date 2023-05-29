@@ -5,10 +5,11 @@
 
 #include <lora_driver.h>
 #include <status_leds.h>
+#include "../lib/FreeRTOS/src/FreeRTOSVariant.h"
 
+#include "semaphores.h"
 #include "servo.h"
 #include "display_7seg.h"
-#include "../lib/FreeRTOS/src/FreeRTOSVariant.h"
 
 // Parameters for OTAA join - You have got these in a mail from IHA
 #define LORA_appEUI "2BBE8F09765BBF4B"
@@ -46,7 +47,7 @@ static void _lora_setup(void)
 {
 	char _out_buf[20];
 	lora_driver_returnCode_t rc;
-	status_leds_slowBlink(led_ST3); // Led the yellow led blink slowly while we are setting up LoRa
+	status_leds_slowBlink(led_ST3); // Led the orange led blink slowly while we are setting up LoRa
 
 	// Factory reset the transceiver
 	printf("FactoryReset >%s<\n",
@@ -106,6 +107,8 @@ static void _lora_setup(void)
 		// Connected to LoRaWAN :-)
 		// Make the green led steady
 		status_leds_ledOn(led_ST2);
+		// Turn off the orange led
+		status_leds_ledOff(led_ST3);
 	}
 	else
 	{
@@ -156,18 +159,26 @@ void lora_handler_task( void *pvParameters )
 		xTaskDelayUntil( &xLastWakeTime, xFrequency );
 
 		// current data payload
-		uint16_t co2_ppm = readStatus()->CO2_value;
-		uint16_t hum = readStatus()->humidity_value;
-		int16_t temp = readStatus()->temperature_value;
-        int8_t servstatus = readStatus()->servoDegrees;
+		
+		// wait for semaphore to be free
+		waitForSemaphore(xServoStatusSemaphore);
+		struct Status* servoStatus = readStatus();
+		
+		uint16_t co2_ppm = servoStatus->CO2_value;
+		uint16_t hum = servoStatus->humidity_value;
+		int16_t temp = servoStatus->temperature_value;
+        int8_t servoDegrees = servoStatus->servoDegrees;
 
-		_uplink_payload.bytes[0] = co2_ppm >> 8; 		// most significant byte
-		_uplink_payload.bytes[1] = co2_ppm & 0xFF; 		// least significant byte
-		_uplink_payload.bytes[2] = hum >> 8; 			// most significant byte
-		_uplink_payload.bytes[3] = hum & 0xFF; 			// least significant byte
-		_uplink_payload.bytes[4] = temp >> 8; 			// most significant byte
-		_uplink_payload.bytes[5] = temp & 0xFF; 		// least significant byte
-		_uplink_payload.bytes[6] = servstatus & 0xFF; 	// 8bit degrees
+		_uplink_payload.bytes[0] = co2_ppm >> 8; 			// most significant byte
+		_uplink_payload.bytes[1] = co2_ppm & 0xFF; 			// least significant byte
+		_uplink_payload.bytes[2] = hum >> 8; 				// most significant byte
+		_uplink_payload.bytes[3] = hum & 0xFF; 				// least significant byte
+		_uplink_payload.bytes[4] = temp >> 8; 				// most significant byte
+		_uplink_payload.bytes[5] = temp & 0xFF; 			// least significant byte
+		_uplink_payload.bytes[6] = servoDegrees & 0xFF; 	// 8bit degrees
+		
+		// freeing up the semaphore
+		xSemaphoreGive( xServoStatusSemaphore );
 
         // blue led on to indicate sending
 		status_leds_ledOn(led_ST4);
@@ -194,11 +205,6 @@ void lora_handler_task( void *pvParameters )
                 printf("Upload Message OK - \n\tDOWN LINK: from port: %d with %d bytes received!",
                        _downlink_payload.portNo, _downlink_payload.len);
 
-                // display the number of bytes received for debugging purposes
-                display_7seg_displayHex("512E");
-                vTaskDelay(pdMS_TO_TICKS(3000UL));
-                display_7seg_display(_downlink_payload.len, 0);
-
                 // check the size of the received payload is as expected
                 if (_downlink_payload.len == 13)
                 {
@@ -211,7 +217,7 @@ void lora_handler_task( void *pvParameters )
                     uint16_t maxHum;
                     int16_t minTemp;
                     int16_t maxTemp;
-                    int8_t servstatus;
+                    int8_t servoDegrees;
 
                     // decode the payload into the variables through the pointers
                     minCO2 = (_downlink_payload.bytes[0] << 8) | _downlink_payload.bytes[1];
@@ -220,11 +226,11 @@ void lora_handler_task( void *pvParameters )
                     maxHum = (_downlink_payload.bytes[6] << 8) | _downlink_payload.bytes[7];
                     minTemp = (_downlink_payload.bytes[8] << 8) | _downlink_payload.bytes[9];
                     maxTemp = (_downlink_payload.bytes[10] << 8) | _downlink_payload.bytes[11];
-                    servstatus = _downlink_payload.bytes[12];
-
+                    servoDegrees = _downlink_payload.bytes[12];
+					
                     // use the values to update the servo configuration
                     updateConfiguration(minCO2, maxCO2, minTemp,
-                                        maxTemp, minHum, maxHum, servstatus);
+                                        maxTemp, minHum, maxHum, servoDegrees);
 
                     vTaskDelay(pdMS_TO_TICKS(20UL));
 
