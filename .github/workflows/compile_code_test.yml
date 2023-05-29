@@ -1,9 +1,8 @@
-name: Compile and upload code as an artifact
+name: Code compilation test
 
 on:
-  push:
-    branches:
-      - main
+  pull_request:
+    types: [opened, edited, reopened]
 
 jobs:
   build:
@@ -21,18 +20,9 @@ jobs:
       
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Set up artifacts and compress source code
-        run: zip -r source.zip ./ ; mkdir downloads ; mv source.zip downloads/source.zip
       
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
       
       - name: Build program using Platformio CLI
-        run: pio run ; cp ./.pio/build/ATmega2560/firmware.hex downloads/firmware.hex
-
-      - name: Upload source code and firmware as Artifacts
-        uses: actions/upload-artifact@v2
-        with: 
-          name: assets-for-download
-          path: downloads
+        run: pio run
