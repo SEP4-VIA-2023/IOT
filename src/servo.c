@@ -12,12 +12,18 @@
 #include <task.h>
 #include <rc_servo.h>
 
-// private stuff
+/**
+ * private stuff
+ */
 void servoUpdateLoop(void *pvParameters);
 
-// servo status including what values it has read
+ /**
+  * servo status including what values it has read
+  */
 struct Status status;
-// the current configuration the servo runs on
+/**
+ * the current configuration the servo runs on
+ */
 struct Configuration configuration;
 
 void initialiseServo(UBaseType_t servoTaskPriority,
@@ -26,13 +32,17 @@ void initialiseServo(UBaseType_t servoTaskPriority,
 	uint16_t minHumidity, uint16_t maxHumidity,
 	int8_t degreeRotation
 ) {
-	// setting up initial status
+    /**
+     * setting up initial status
+     */
 	status.CO2_value = 0;
 	status.humidity_value = 0;
 	status.temperature_value = 0;
 	status.servoDegrees = 0;
-	
-	// setting up initial configuration
+
+    /**
+     * setting up initial configuration
+     */
 	configuration.degreeRotation = degreeRotation;
 	configuration.minCO2_config = minCO2;
 	configuration.maxCO2_config = maxCO2;
@@ -58,11 +68,15 @@ void updateConfiguration(uint16_t minCO2, uint16_t maxCO2,
 	int16_t minTemperature, int16_t maxTemperature,
 	uint16_t minHumidity, uint16_t maxHumidity,
 	int8_t degreeRotation
-) {	
-	// wait for semaphore to be free
+) {
+    /**
+     * wait for semaphore to be free
+     */
 	waitForSemaphore(xServoConfigurationSemaphore);
-	
-	// configuration can be updated
+
+	/**
+	 * configuration can be updated
+	 */
 	configuration.degreeRotation = degreeRotation;
 	configuration.minCO2_config = minCO2;
 	configuration.maxCO2_config = maxCO2;
@@ -70,30 +84,42 @@ void updateConfiguration(uint16_t minCO2, uint16_t maxCO2,
 	configuration.maxHumidity_config = maxHumidity;
 	configuration.minTemperature_config = minTemperature;
 	configuration.maxTemperature_config = maxTemperature;
-	
-	// giving back the semaphore
+
+    /**
+     * giving back the semaphore
+     */
 	xSemaphoreGive( xServoConfigurationSemaphore );
 }
 
-// Continuously updates the servo activity
+/**
+ * Continuously updates the servo activity
+ * @param pvParameters
+ */
 void servoUpdateLoop(void *pvParameters) {
     TickType_t xLastWakeTime;
 	const TickType_t xFrequency = 1000/portTICK_PERIOD_MS; // 1000 ms
-	// Initialise the xLastWakeTime variable with the current time.
+    /**
+     * Initialise the xLastWakeTime variable with the current time.
+     */
 	xLastWakeTime = xTaskGetTickCount();
 
 	for(;;) {
 		xTaskDelayUntil( &xLastWakeTime, xFrequency );
-		//puts("Reading CO2 value..."); // stdio functions are not reentrant - Should normally be protected by MUTEX
-        
-		// wait for semaphore to be free
+
+        /**
+         * wait for semaphore to be free
+         */
 		waitForSemaphore(xServoStatusSemaphore);
-		// reading values
+        /**
+         * reading values
+         */
 		status.CO2_value = readCO2();
 		status.humidity_value = ReadHumidity();
 		status.temperature_value = ReadTemperature();
-		
-		// wait for config semaphore to be free
+
+        /**
+         * wait for config semaphore to be free
+         */
 		waitForSemaphore(xServoConfigurationSemaphore);
 		
 		int needsAction;
@@ -110,25 +136,38 @@ void servoUpdateLoop(void *pvParameters) {
 			status.temperature_value < configuration.minTemperature_config) {
 			needsAction = 1;
 		}
-		
-		// using J13 port
+
+        /**
+         * using J13 port
+         */
 		if (needsAction) {
+            /**
+             * servo needs to move
+             */
 			// servo needs to move
 			if (status.servoDegrees != configuration.degreeRotation) {
-				// servo hasn't moved yet
+                /**
+                 * servo hasn't moved yet
+                 */
 				rc_servo_setPosition(1, configuration.degreeRotation);
 				status.servoDegrees = configuration.degreeRotation;
 			}
 		} else {
-			// servo should be idle
+            /**
+             * servo should be idle
+             */
 			if (status.servoDegrees != 0) {
-				// servo isn't idle, resetting position
+                /**
+                 * servo isn't idle, resetting position
+                 */
 				rc_servo_setPosition(1, 0);
 				status.servoDegrees = 0;
 			}
 		}
-		
-		// freeing up the semaphores
+
+        /**
+         * freeing up the semaphores
+         */
 		xSemaphoreGive( xServoStatusSemaphore );
 		xSemaphoreGive( xServoConfigurationSemaphore );
 	}

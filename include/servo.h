@@ -11,7 +11,9 @@
 #include <stdint.h>
 #include <ATMEGA_FreeRTOS.h>
 
-// Configuration to run the servo, degreeRotation should be from -100 to 100
+/**
+ * Configuration to run the servo, degreeRotation should be from -100 to 100
+ */
 struct Configuration {
 	uint16_t minCO2_config;
 	uint16_t maxCO2_config;
@@ -22,7 +24,9 @@ struct Configuration {
 	int8_t degreeRotation;
 };
 
-// The status of the servo including what values it has read
+/**
+ * Status of the servo including what values it has read
+ */
 struct Status {
 	int8_t servoDegrees;
 	uint16_t CO2_value;
@@ -30,7 +34,17 @@ struct Status {
 	int16_t temperature_value;
 };
 
-// must be called before FreeRTOS vTaskStartScheduler()
+/**
+ * Initialises the servo
+ * @param servoTaskPriority task priority
+ * @param minCO2 minimum CO2 value
+ * @param maxCO2 maximum CO2 value
+ * @param minTemperature minimum temperature value
+ * @param maxTemperature maximum temperature value
+ * @param minHumidity minimum humidity value
+ * @param maxHumidity maximum humidity value
+ * @param degreeRotation servo rotation
+ */
 void initialiseServo(UBaseType_t servoTaskPriority,
 					uint16_t minCO2, uint16_t maxCO2,
 					int16_t minTemperature, int16_t maxTemperature,
@@ -38,13 +52,28 @@ void initialiseServo(UBaseType_t servoTaskPriority,
 					int8_t degreeRotation
 					);
 
-// Returns a pointer to the status of the servo including CO2, Humidity and Temperature readings
+/**
+ * Returns a pointer to the status of the servo including CO2, Humidity and Temperature readings
+ * @return pointer to the status of the servo
+ */
 struct Status* readStatus();
 
-// Returns a pointer to the current configuration that the servo is using
+/**
+ * Returns a pointer to the current configuration that the servo is using
+ * @return pointer to the current configuration that the servo is using
+ */
 struct Configuration* readConfiguration();
 
-// Set new configuration
+/**
+ * Set new configuration
+ * @param minCO2 minimum CO2 value
+ * @param maxCO2 maximum CO2 value
+ * @param minTemperature minimum temperature value
+ * @param maxTemperature maximum temperature value
+ * @param minHumidity minimum humidity value
+ * @param maxHumidity maximum humidity value
+ * @param degreeRotation servo rotation
+ */
 void updateConfiguration(
 	uint16_t minCO2, uint16_t maxCO2,
 	int16_t minTemperature, int16_t maxTemperature,

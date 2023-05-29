@@ -1,10 +1,19 @@
 #pragma once
 #include <ATMEGA_FreeRTOS.h>
 
-//Initialises the humidity and temperature sensor
+/**
+ * Initialises the humidity and temperature sensor
+ * @param TEMHUMPriority task priority
+ */
 void initialiseTEMHUM(UBaseType_t TEMHUMPriority);
 
-//Returns the humidity value of the sensor
+/**
+ * Reads the humidity value of the sensor
+ * @return humidity value
+ */
 uint16_t ReadHumidity();
-//Returns the temperature value of the sensor
+/**
+ * Reads the temperature value of the sensor
+ * @return temperature value
+ */
 int16_t ReadTemperature();

@@ -12,13 +12,20 @@
 #include <ATMEGA_FreeRTOS.h>
 #include <semphr.h>
 
-// Semaphore for accessing servo status
+/*
+ * Semaphore for accessing servo status
+ */
 SemaphoreHandle_t xServoStatusSemaphore;
 
-// Semaphore for accessing servo configuration
+/**
+ * Semaphore for accessing servo configuration
+ */
 SemaphoreHandle_t xServoConfigurationSemaphore;
 
 void initialiseSemaphores();
 
-// wait to access a semaphore
+/**
+ * wait to access a semaphore
+ * @param semaphore
+ */
 void waitForSemaphore(SemaphoreHandle_t semaphore);
