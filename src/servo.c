@@ -5,11 +5,11 @@
  *  Author: andrejs
  */ 
 
+#include "semaphores.h"
 #include "servo.h"
 #include "co2.h"
 #include "humidity_and_temperature.h"
 #include <task.h>
-#include <semphr.h>
 #include <rc_servo.h>
 
 // private stuff
@@ -58,7 +58,11 @@ void updateConfiguration(uint16_t minCO2, uint16_t maxCO2,
 	int16_t minTemperature, int16_t maxTemperature,
 	uint16_t minHumidity, uint16_t maxHumidity,
 	int8_t degreeRotation
-) {
+) {	
+	// wait for semaphore to be free
+	waitForSemaphore(xServoConfigurationSemaphore);
+	
+	// configuration can be updated
 	configuration.degreeRotation = degreeRotation;
 	configuration.minCO2_config = minCO2;
 	configuration.maxCO2_config = maxCO2;
@@ -66,6 +70,9 @@ void updateConfiguration(uint16_t minCO2, uint16_t maxCO2,
 	configuration.maxHumidity_config = maxHumidity;
 	configuration.minTemperature_config = minTemperature;
 	configuration.maxTemperature_config = maxTemperature;
+	
+	// giving back the semaphore
+	xSemaphoreGive( xServoConfigurationSemaphore );
 }
 
 // Continuously updates the servo activity
@@ -79,10 +86,15 @@ void servoUpdateLoop(void *pvParameters) {
 		xTaskDelayUntil( &xLastWakeTime, xFrequency );
 		//puts("Reading CO2 value..."); // stdio functions are not reentrant - Should normally be protected by MUTEX
         
+		// wait for semaphore to be free
+		waitForSemaphore(xServoStatusSemaphore);
 		// reading values
 		status.CO2_value = readCO2();
 		status.humidity_value = ReadHumidity();
 		status.temperature_value = ReadTemperature();
+		
+		// wait for config semaphore to be free
+		waitForSemaphore(xServoConfigurationSemaphore);
 		
 		int needsAction;
 		needsAction = 0;
@@ -115,6 +127,10 @@ void servoUpdateLoop(void *pvParameters) {
 				status.servoDegrees = 0;
 			}
 		}
+		
+		// freeing up the semaphores
+		xSemaphoreGive( xServoStatusSemaphore );
+		xSemaphoreGive( xServoConfigurationSemaphore );
 	}
 }
 
