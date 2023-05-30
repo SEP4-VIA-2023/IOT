@@ -44,9 +44,8 @@ void initialiseTEMHUM(UBaseType_t TEMHUMPriority){
 void TEMHUMMeasure()
 {
     hih8120_wakeup();
+    vTaskDelay(pdMS_TO_TICKS(50)); // time to wake up
     hih8120_measure();
-
-    vTaskDelay(pdMS_TO_TICKS(20));
 }
 
 /**
